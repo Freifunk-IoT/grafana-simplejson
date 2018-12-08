@@ -22,14 +22,31 @@ const database = new InfluxDB({
 })
 database.createDatabase(config.database.database);
 
+app.use(async (ctx, next) => {
+   ctx.set('WWW-Authenticate', 'Basic realm="grafana", enc=utf-8');
+   ctx.state.no_json = true;
+   let auth_header: string = ctx.headers.authorization;
+   let unauth_err = new HttpError("Unauthorized", HttpStatusCode.UNAUTHORIZED);
+   if (!auth_header) throw unauth_err;
+   let [basic, cred] = auth_header.split(" ");
+   if (basic.toLowerCase() !== "basic") {
+      throw unauth_err
+   }
+
+   let [username, password] = Buffer.from(cred, "base64").toString("utf8").split(":", 2);
+   if (!username || !password) throw unauth_err;
+   if (username !== config.web.username || password !== config.web.password) throw unauth_err;
+   return next()
+})
+
 import * as Router from "koa-router";
 const router = new Router();
 
-router.post("/", ctx => {
+router.all("/", ctx => {
    ctx.body = { success: true };
 })
 
-router.post("/search", async ctx => {
+router.all("/search", async ctx => {
    let target = ctx.request.body.target
    if (target) {
       let channels = await database.query(`SHOW FIELD KEYS FROM ${escape.tag(target)}`);
@@ -40,7 +57,8 @@ router.post("/search", async ctx => {
    }
 })
 import * as moment from "moment";
-router.post("/query", async ctx => {
+import { HttpError, HttpStatusCode } from "./errors";
+router.all("/query", async ctx => {
    let query: Query = ctx.request.body;
 
    let from = query.range.from;
@@ -68,7 +86,7 @@ router.post("/query", async ctx => {
    ctx.body = data;
 })
 
-router.post("/annotations", ctx => {
+router.all("/annotations", ctx => {
    Logging.debug("annotations \n", ctx.request.body);
    ctx.body = { error: true };
 })

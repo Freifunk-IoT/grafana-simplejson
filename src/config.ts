@@ -6,6 +6,8 @@ interface WebConfig {
    port: number;
    host: string | undefined;
    access_log: boolean;
+   username: string;
+   password: string;
 }
 
 interface DatabaseConfig {
@@ -44,7 +46,9 @@ const definition = {
          if (!ipregex.test(value)) throw new Error("Invalid IP!");
          return value;
       },
-      access_log: (value: string) => value ? Boolean(value) : true
+      access_log: (value: string) => value ? Boolean(value) : true,
+      username: (value: string) => value || "grafana",
+      password: (value: string) => value ? value : new Error("Password must be set!")
    },
    database: {
       database: (value: string) => value || "ffiot",
