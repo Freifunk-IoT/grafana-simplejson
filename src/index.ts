@@ -78,8 +78,7 @@ router.all("/query", async ctx => {
    })
 
    if (prs.length > max) {
-      //TODO: remove oldest
-      prs = prs.slice(0, prs.length);
+      prs = prs.slice(prs.length - max, prs.length);
    }
 
    let data = await Promise.all(prs);
