@@ -49,7 +49,7 @@ router.all("/", ctx => {
 router.all("/search", async ctx => {
    let target = ctx.request.body.target
    if (target) {
-      let channels = await database.query(`SHOW FIELD KEYS FROM ${escape.tag(target)}`);
+      let channels = await database.query(`SHOW FIELD KEYS FROM "${escape.tag(target)}"`);
       ctx.body = channels.map((e: any) => e.fieldKey);
    } else {
       let series = await database.getSeries();
@@ -69,7 +69,7 @@ router.all("/query", async ctx => {
 
    let prs = query.targets.map(async t => {
       let [target, channel] = t.target.split(".")
-      let r = await database.query(`SELECT ${escape.tag(channel)} FROM ${escape.tag(target)} WHERE time < '${to}' AND time > '${from}'`)
+      let r = await database.query(`SELECT "${escape.tag(channel)}" FROM "${escape.tag(target)}" WHERE time < '${to}' AND time > '${from}'`)
 
       return {
          target: t.target,
